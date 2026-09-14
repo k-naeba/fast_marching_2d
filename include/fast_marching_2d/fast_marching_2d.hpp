@@ -16,6 +16,7 @@
 #include <queue>
 #include <vector>
 
+#include "common_geometry/bilinear.hpp"
 #include "common_geometry/grid.hpp"
 #include "common_geometry/types.hpp"
 
@@ -50,24 +51,6 @@ struct HeapEntryGreater {
 
 inline std::size_t NodeIndex(std::size_t i, std::size_t j, std::size_t nx) {
   return j * nx + i;
-}
-
-// Resolves a world-space point to its containing cell's lower-left node
-// index, clamped so points on or outside the grid boundary still
-// resolve to the last valid cell.
-struct CellLocal {
-  std::size_t i, j;
-};
-
-inline CellLocal LocateCell(const ns_cg::Vec2d& p, const ns_cg::Vec2d& origin,
-                             double dx, double dy, std::size_t nx, std::size_t ny) {
-  const double fx = (p.x() - origin.x()) / dx;
-  const double fy = (p.y() - origin.y()) / dy;
-  const long max_i = static_cast<long>(nx) - 2;
-  const long max_j = static_cast<long>(ny) - 2;
-  const long i = std::clamp<long>(static_cast<long>(std::floor(fx)), 0, std::max(max_i, 0L));
-  const long j = std::clamp<long>(static_cast<long>(std::floor(fy)), 0, std::max(max_j, 0L));
-  return CellLocal{static_cast<std::size_t>(i), static_cast<std::size_t>(j)};
 }
 
 // Solves the 2D Eikonal update at a node from its known neighbor values
@@ -115,7 +98,6 @@ inline ns_cg::Grid2d<double> ComputeArrivalTime(std::size_t nx, std::size_t ny, 
   using detail::EikonalUpdate;
   using detail::HeapEntry;
   using detail::HeapEntryGreater;
-  using detail::LocateCell;
   using detail::NodeIndex;
   using detail::NodeState;
 
@@ -145,7 +127,7 @@ inline ns_cg::Grid2d<double> ComputeArrivalTime(std::size_t nx, std::size_t ny, 
   // sub-grid-accurate initial distance (direct Euclidean distance to
   // the seed itself, not the nearest node). ---
   for (const Seed& seed : seeds) {
-    const detail::CellLocal cell = LocateCell(seed.position, origin, dx, dy, nx, ny);
+    const ns_cg::GridCellLocal cell = ns_cg::LocateCell(seed.position, origin, dx, dy, nx, ny);
     const std::size_t corner_i[4] = {cell.i, cell.i + 1, cell.i + 1, cell.i};
     const std::size_t corner_j[4] = {cell.j, cell.j, cell.j + 1, cell.j + 1};
     for (int c = 0; c < 4; ++c) {
