@@ -1,2 +1,5 @@
 add_executable(fast_marching_2d_single_source_distance_demo single_source_distance_demo.cpp)
 target_link_libraries(fast_marching_2d_single_source_distance_demo PRIVATE fast_marching_2d)
+
+add_executable(fast_marching_2d_line_levelset_demo line_levelset_demo.cpp)
+target_link_libraries(fast_marching_2d_line_levelset_demo PRIVATE fast_marching_2d)
